@@ -12,102 +12,87 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.matrixdownfall.util.characters
+import kotlinx.coroutines.Delay
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 @Composable
-fun MatrixScreen(rows:Int = 10) {
+fun MatrixScreen(matrixRows:Int = 20){
     Row(modifier = Modifier.background(Color.Black)){
-        repeat(rows){
-            MatrixDropDown(
+        repeat(matrixRows){
+            MatrixStrip(
                 modifier = Modifier.weight(1f),
-                yDelay = Random.nextInt(10) * 1000L,
-                speed = (Random.nextInt(10) * 10L) + 100
+                stripDelay = Random.nextInt(1, 5) * 1000L,
+                stripSpeed = Random.nextInt(1, 10) * 10L + 100
             )
         }
     }
 }
 
 @Composable
-fun MatrixDropDown(modifier: Modifier, yDelay:Long, speed:Long){
-//    Log.d("APP", "ydelay $yDelay")
-//    Log.d("APP", "speed $speed")
+fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long){
+    var lettersToDraw by remember { mutableStateOf(0) }
 
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxHeight(),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        val pxWidth = with(LocalDensity.current){ maxWidth.toPx() }
-        val pxHeigh = with(LocalDensity.current){ maxHeight.toPx() }
+    BoxWithConstraints(modifier = modifier.fillMaxHeight()) {
 
-        val charsPerDropdown = remember {
-            Array((pxHeigh / pxWidth).toInt()){
-                characters.random()
-            }
+        val ratio = remember { (maxHeight / maxWidth).toInt() }
+        val stripCharaters = remember {
+            Array(ratio){ characters.random() }
         }
-//        Log.d("APP", "charsPerDropdown ${charsPerDropdown.size}")
 
-        val lettersToDraw = remember { mutableStateOf(0) }
-//        Log.d("APP", "lettersToDraw ${lettersToDraw.value}")
+        val textSizeFactor = remember { Random.nextInt(5, 10) * 0.1f }
+        val textSize = with(LocalDensity.current){
+            (maxWidth * textSizeFactor).toSp()
+        }
 
-        Column(){
-            repeat(lettersToDraw.value){
-                MatrixCharacter(
-                    character = charsPerDropdown[it],
-                    pxSize = pxWidth,
-                    speed = speed
-                ){
-                    if(it >= (charsPerDropdown.size * 0.6).toInt()){
-                        lettersToDraw.value = 0
+        Column() {
+            repeat(lettersToDraw) {
+                MatrixChar(
+                    character = stripCharaters[it],
+                    textSize = textSize,
+                    onAnimationFinished = {
+                        if(it >= stripCharaters.size * 0.5){
+                            lettersToDraw = 0
+                        }
                     }
-                }
+                )
             }
         }
 
-        LaunchedEffect(key1 = yDelay){
-            delay(yDelay)
+        LaunchedEffect(key1 = stripDelay){
+            delay(stripDelay)
             while(true){
-                if(lettersToDraw.value < charsPerDropdown.size){
-                    lettersToDraw.value += 1
+                if(lettersToDraw < stripCharaters.size){
+                    lettersToDraw += 1
                 }
-                delay(speed)
+                delay(stripSpeed)
             }
         }
     }
 }
 
 @Composable
-fun MatrixCharacter(
-    character:String,
-    pxSize: Float,
-    speed: Long,
-    onAlphaFinished: () -> Unit
-){
-    val spSize = with(LocalDensity.current) { pxSize.toSp() }
-    val textColor = remember { mutableStateOf(Color.White) }
-
-    val startFade = remember { mutableStateOf(false) }
+fun MatrixChar(character: String, textSize: TextUnit, onAnimationFinished: () -> Unit){
+    var runAnimation by remember { mutableStateOf(false) }
     val alpha = animateFloatAsState(
-        targetValue = if(startFade.value) 0f else 1f,
+        targetValue = if(runAnimation) 0f else 1f,
         animationSpec = tween(
-            durationMillis = 2000
+            durationMillis = 2000,
         ),
-        finishedListener = { onAlphaFinished() }
+        finishedListener = { onAnimationFinished() }
     )
 
     Text(
         character,
-        fontSize = spSize,
-        color = textColor.value.copy(alpha = alpha.value)
+        color = Color.Green.copy(alpha = alpha.value),
+        fontSize = textSize
     )
 
     LaunchedEffect(Unit){
-        delay(speed)
-        textColor.value = Color.Green
-        startFade.value = true
+        runAnimation = true
     }
 }
