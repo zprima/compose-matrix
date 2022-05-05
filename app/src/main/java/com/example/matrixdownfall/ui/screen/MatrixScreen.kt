@@ -33,7 +33,7 @@ fun MatrixScreen(mode: Mode, matrixRows:Int = 20){
             MatrixStrip(
                 modifier = Modifier.weight(1f),
                 stripDelay = Random.nextInt(1, 8) * 1000L,
-                stripSpeed = Random.nextInt(1, 5) * 10L + 100,
+                stripSpeed = Random.nextInt(1, 4) * 10L + 100,
                 stripColor = if(mode == Mode.GREEN) Color.Green else colors.random()
             )
         }
@@ -93,7 +93,7 @@ fun MatrixChar(
     val alpha = animateFloatAsState(
         targetValue = if(runAnimation) 0f else 1f,
         animationSpec = tween(
-            durationMillis = 2000,
+            durationMillis = 1500,
         ),
         finishedListener = { onAnimationFinished() }
     )
