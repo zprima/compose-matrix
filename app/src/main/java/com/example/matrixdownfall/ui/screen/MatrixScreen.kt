@@ -15,26 +15,33 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.matrixdownfall.util.Mode
 import com.example.matrixdownfall.util.characters
 import kotlinx.coroutines.Delay
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
+
+
 @Composable
-fun MatrixScreen(matrixRows:Int = 20){
+fun MatrixScreen(mode: Mode, matrixRows:Int = 20){
+
+    val colors = remember { listOf(Color.Red, Color.Green, Color.Yellow) }
+
     Row(modifier = Modifier.background(Color.Black)){
         repeat(matrixRows){
             MatrixStrip(
                 modifier = Modifier.weight(1f),
-                stripDelay = Random.nextInt(1, 5) * 1000L,
-                stripSpeed = Random.nextInt(1, 10) * 10L + 100
+                stripDelay = Random.nextInt(1, 8) * 1000L,
+                stripSpeed = Random.nextInt(1, 5) * 10L + 100,
+                stripColor = if(mode == Mode.GREEN) Color.Green else colors.random()
             )
         }
     }
 }
 
 @Composable
-fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long){
+fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long, stripColor: Color){
     var lettersToDraw by remember { mutableStateOf(0) }
 
     BoxWithConstraints(modifier = modifier.fillMaxHeight()) {
@@ -44,7 +51,7 @@ fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long){
             Array(ratio){ characters.random() }
         }
 
-        val textSizeFactor = remember { Random.nextInt(5, 10) * 0.1f }
+        val textSizeFactor = remember { Random.nextInt(5, 15) * 0.1f }
         val textSize = with(LocalDensity.current){
             (maxWidth * textSizeFactor).toSp()
         }
@@ -54,6 +61,7 @@ fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long){
                 MatrixChar(
                     character = stripCharaters[it],
                     textSize = textSize,
+                    color = stripColor,
                     onAnimationFinished = {
                         if(it >= stripCharaters.size * 0.5){
                             lettersToDraw = 0
@@ -76,7 +84,11 @@ fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long){
 }
 
 @Composable
-fun MatrixChar(character: String, textSize: TextUnit, onAnimationFinished: () -> Unit){
+fun MatrixChar(
+    character: String,
+    textSize: TextUnit,
+    color: Color = Color.Green,
+    onAnimationFinished: () -> Unit){
     var runAnimation by remember { mutableStateOf(false) }
     val alpha = animateFloatAsState(
         targetValue = if(runAnimation) 0f else 1f,
@@ -88,7 +100,7 @@ fun MatrixChar(character: String, textSize: TextUnit, onAnimationFinished: () ->
 
     Text(
         character,
-        color = Color.Green.copy(alpha = alpha.value),
+        color = color.copy(alpha = alpha.value),
         fontSize = textSize
     )
 
