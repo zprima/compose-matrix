@@ -5,43 +5,71 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.matrixdownfall.util.Mode
 import com.example.matrixdownfall.util.characters
 import kotlinx.coroutines.Delay
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
+@Composable
+fun MatrixScreen(
+    matrixViewModel: MatrixViewModel = viewModel()
+){
+    val uiState = matrixViewModel.uiState
+    val backgroundColor = if(uiState.mode == Mode.BLACK_WHITE) Color.White else Color.Black
 
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { matrixViewModel.changeMode() }
+                )
+            },
+        color = backgroundColor
+    ) {
+        MatrixStrips(uiState)
+    }
+}
 
 @Composable
-fun MatrixScreen(mode: Mode, matrixRows:Int = 20){
+fun MatrixStrips(uiState: MatrixUiState){
 
-    val colors = remember { listOf(Color.Red, Color.Green, Color.Yellow) }
-
-    Row(modifier = Modifier.background(Color.Black)){
-        repeat(matrixRows){
+    Row(modifier = Modifier){
+        repeat(uiState.rows){
             MatrixStrip(
                 modifier = Modifier.weight(1f),
-                stripDelay = Random.nextInt(1, 8) * 1000L,
-                stripSpeed = Random.nextInt(1, 4) * 10L + 100,
-                stripColor = if(mode == Mode.GREEN) Color.Green else colors.random()
+                stripDelay = Random.nextInt(uiState.stripDelayMin, uiState.stripDelayMax) * 1000L,
+                stripSpeed = Random.nextInt(uiState.stripSpeedMin, uiState.stripSpeedMax) * 10L + 100,
+                stripColor =
+                    when(uiState.mode){
+                        Mode.GREEN -> Color.Green
+                        Mode.COLOR -> uiState.colors.random()
+                        Mode.BLACK_WHITE -> Color.Black
+                    },
+                textSizeFactor = Random.nextInt(uiState.textMinFactor, uiState.textMaxFactor) * 0.1f
             )
         }
     }
 }
 
 @Composable
-fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long, stripColor: Color){
+fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long, stripColor: Color, textSizeFactor: Float){
     var lettersToDraw by remember { mutableStateOf(0) }
 
     BoxWithConstraints(modifier = modifier.fillMaxHeight()) {
@@ -51,7 +79,6 @@ fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long, stripCol
             Array(ratio){ characters.random() }
         }
 
-        val textSizeFactor = remember { Random.nextInt(5, 15) * 0.1f }
         val textSize = with(LocalDensity.current){
             (maxWidth * textSizeFactor).toSp()
         }

@@ -21,22 +21,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MatrixDownfallTheme {
-
-                var mode by remember { mutableStateOf(Mode.GREEN) }
-
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onTap = { mode = if(mode == Mode.COLOR) Mode.GREEN else Mode.COLOR }
-                            )
-                        },
-                    color = MaterialTheme.colors.background
-                ) {
-                    MatrixScreen(mode)
-                }
+                MatrixScreen()
             }
         }
     }

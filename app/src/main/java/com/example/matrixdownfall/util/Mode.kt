@@ -1,5 +1,5 @@
 package com.example.matrixdownfall.util
 
 enum class Mode {
-    GREEN, COLOR
+    GREEN, COLOR, BLACK_WHITE
 }
