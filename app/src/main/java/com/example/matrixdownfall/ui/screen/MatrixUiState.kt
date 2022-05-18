@@ -12,5 +12,5 @@ data class MatrixUiState(
     val stripSpeedMax: Int = 4,
     val textMinFactor: Int = 5,
     val textMaxFactor: Int = 15,
-    val colors: List<Color> = listOf(Color.Red, Color.Green, Color.Yellow)
+    val colors: List<Color> = listOf(Color.Red, Color.Cyan, Color.Yellow, Color.Magenta)
 )

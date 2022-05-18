@@ -120,7 +120,7 @@ fun MatrixChar(
     val alpha = animateFloatAsState(
         targetValue = if(runAnimation) 0f else 1f,
         animationSpec = tween(
-            durationMillis = 1500,
+            durationMillis = (1..4).random() * 1000,
         ),
         finishedListener = { onAnimationFinished() }
     )
