@@ -5,7 +5,7 @@ import com.example.matrixdownfall.util.Mode
 
 data class MatrixUiState(
     val mode: Mode = Mode.GREEN,
-    val rows: Int = 20,
+    val rows: Int = 15,
     val stripDelayMin: Int = 1,
     val stripDelayMax: Int = 8,
     val stripSpeedMin: Int = 1,

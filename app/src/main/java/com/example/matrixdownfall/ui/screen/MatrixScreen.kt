@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.matrixdownfall.util.Mode
 import com.example.matrixdownfall.util.characters
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.Delay
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -32,6 +33,21 @@ fun MatrixScreen(
 ){
     val uiState = matrixViewModel.uiState
     val backgroundColor = if(uiState.mode == Mode.BLACK_WHITE) Color.White else Color.Black
+
+    // Remember a SystemUiController
+    val systemUiController = rememberSystemUiController()
+    val useDarkIcons = MaterialTheme.colors.isLight
+
+    SideEffect {
+        // Update all of the system bar colors to be transparent, and use
+        // dark icons if we're in light theme
+        systemUiController.setSystemBarsColor(
+            color = Color.Black,
+            darkIcons = useDarkIcons
+        )
+
+        // setStatusBarsColor() and setNavigationBarColor() also exist
+    }
 
     Surface(
         modifier = Modifier
