@@ -1,153 +1,124 @@
 package com.example.matrixdownfall.ui.screen
 
-import android.util.Log
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.matrixdownfall.util.Mode
 import com.example.matrixdownfall.util.characters
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import kotlinx.coroutines.Delay
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 @Composable
-fun MatrixScreen(
-    matrixViewModel: MatrixViewModel = viewModel()
-){
-    val uiState = matrixViewModel.uiState
-    val backgroundColor = if(uiState.mode == Mode.BLACK_WHITE) Color.White else Color.Black
-
-    // Remember a SystemUiController
-    val systemUiController = rememberSystemUiController()
-    val useDarkIcons = MaterialTheme.colors.isLight
-
-    SideEffect {
-        // Update all of the system bar colors to be transparent, and use
-        // dark icons if we're in light theme
-        systemUiController.setSystemBarsColor(
-            color = Color.Black,
-            darkIcons = useDarkIcons
-        )
-
-        // setStatusBarsColor() and setNavigationBarColor() also exist
-    }
-
+fun MatrixScreen(){
     Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { matrixViewModel.changeMode() }
-                )
-            },
-        color = backgroundColor
+        modifier = Modifier.fillMaxSize(),
+        color = Color.Black
     ) {
-        MatrixStrips(uiState)
+        MatrixRain(30)
     }
 }
 
 @Composable
-fun MatrixStrips(uiState: MatrixUiState){
+fun MatrixRain(stripColumns: Int){
+    var startScreenDone by remember { mutableStateOf(false) }
 
-    Row(modifier = Modifier){
-        repeat(uiState.rows){
-            MatrixStrip(
-                modifier = Modifier.weight(1f),
-                stripDelay = Random.nextInt(uiState.stripDelayMin, uiState.stripDelayMax) * 1000L,
-                stripSpeed = Random.nextInt(uiState.stripSpeedMin, uiState.stripSpeedMax) * 10L + 100,
-                stripColor =
-                    when(uiState.mode){
-                        Mode.GREEN -> Color.Green
-                        Mode.COLOR -> uiState.colors.random()
-                        Mode.BLACK_WHITE -> Color.Black
-                    },
-                textSizeFactor = Random.nextInt(uiState.textMinFactor, uiState.textMaxFactor) * 0.1f
-            )
+    Row(){
+        repeat(stripColumns){
+            if(!startScreenDone){
+            MatrixColumn(
+                100L,
+                0L,
+                true,
+                onFinished = {
+                    startScreenDone = true
+                }
+            )}
+            else {
+                MatrixColumn(
+                    Random.nextInt(4) * 10L + 100L,
+                    Random.nextInt(6) * 1000L,
+                    false,
+                    onFinished = {}
+                )
+            }
         }
     }
 }
 
 @Composable
-fun MatrixStrip(modifier: Modifier, stripDelay: Long, stripSpeed: Long, stripColor: Color, textSizeFactor: Float){
-    var lettersToDraw by remember { mutableStateOf(0) }
+fun RowScope.MatrixColumn(crawlSpeed: Long, columnDelay: Long, oneTime: Boolean, onFinished: () -> Unit){
+    BoxWithConstraints(
+        modifier = Modifier.weight(1f).fillMaxHeight()
+    ) {
+        val maxWidthDp = maxWidth
+        val matrixStrip = remember { Array((maxHeight / maxWidth).toInt()){ characters.random() } }
+        var lettersToDraw by remember { mutableStateOf(0) }
 
-    BoxWithConstraints(modifier = modifier.fillMaxHeight()) {
-
-        val ratio = remember { (maxHeight / maxWidth).toInt() }
-        val stripCharaters = remember {
-            Array(ratio){ characters.random() }
-        }
-
-        val textSize = with(LocalDensity.current){
-            (maxWidth * textSizeFactor).toSp()
-        }
-
-        Column() {
-            repeat(lettersToDraw) {
+        Column(Modifier.fillMaxSize()){
+            repeat(lettersToDraw){
                 MatrixChar(
-                    character = stripCharaters[it],
-                    textSize = textSize,
-                    color = stripColor,
-                    onAnimationFinished = {
-                        if(it >= stripCharaters.size * 0.5){
-                            lettersToDraw = 0
+                    matrixStrip[it],
+                    crawlSpeed,
+                    fontSize = with(LocalDensity.current){ maxWidthDp.toSp() },
+                    onFinished = {
+                        if(oneTime && it == (matrixStrip.size * 0.6).toInt()){
+                            onFinished()
+                        } else {
+                            if(it >= matrixStrip.size * 0.6){
+                                lettersToDraw = 0
+                            }
                         }
                     }
                 )
             }
         }
 
-        LaunchedEffect(key1 = stripDelay){
-            delay(stripDelay)
+        LaunchedEffect(Unit){
+            delay(columnDelay)
             while(true){
-                if(lettersToDraw < stripCharaters.size){
+                if(lettersToDraw < matrixStrip.size) {
                     lettersToDraw += 1
                 }
-                delay(stripSpeed)
+
+                if(lettersToDraw > matrixStrip.size * 0.5){
+                    matrixStrip[Random.nextInt(lettersToDraw)] = characters.random()
+                }
+
+                delay(crawlSpeed)
+
             }
         }
     }
 }
 
+
 @Composable
-fun MatrixChar(
-    character: String,
-    textSize: TextUnit,
-    color: Color = Color.Green,
-    onAnimationFinished: () -> Unit){
-    var runAnimation by remember { mutableStateOf(false) }
-    val alpha = animateFloatAsState(
-        targetValue = if(runAnimation) 0f else 1f,
+fun MatrixChar(char: String, crawlSpeed: Long, fontSize: TextUnit, onFinished: () -> Unit){
+    var textColor by remember { mutableStateOf(Color.White) }
+    var startFade by remember { mutableStateOf(false) }
+    val alpha by animateFloatAsState(
+        targetValue = if(startFade) 0f else 1f,
         animationSpec = tween(
-            durationMillis = (1..4).random() * 1000,
+            durationMillis = 4000,
+            easing = LinearEasing
         ),
-        finishedListener = { onAnimationFinished() }
+        finishedListener = { onFinished() }
     )
 
     Text(
-        character,
-        color = color.copy(alpha = alpha.value),
-        fontSize = textSize
+        char,
+        color = textColor.copy(alpha = alpha),
+        fontSize = fontSize
     )
 
     LaunchedEffect(Unit){
-        runAnimation = true
+        delay(crawlSpeed)
+        textColor = Color(0xff43c728)
+        startFade = true
     }
 }
