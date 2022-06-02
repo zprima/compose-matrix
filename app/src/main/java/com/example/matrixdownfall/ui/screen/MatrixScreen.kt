@@ -57,8 +57,8 @@ fun MatrixRain(stripColumns: Int){
             )}
             else {
                 MatrixColumn(
-                    Random.nextInt(4) * 10L + 100L,
-                    Random.nextInt(6) * 1000L,
+                    Random.nextInt(3) * 10L + 100L,
+                    Random.nextInt(5) * 1000L,
                     false,
                     onFinished = {}
                 )
